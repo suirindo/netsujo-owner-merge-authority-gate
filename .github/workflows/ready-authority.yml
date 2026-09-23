@@ -1,0 +1,34 @@
+name: Owner READY authority
+on:
+  workflow_dispatch:
+    inputs:
+      pr_number: { description: "Target PR number", required: true, type: string }
+      expected_base_sha: { description: "Exact current base SHA", required: true, type: string }
+      expected_head_sha: { description: "Exact PR head SHA", required: true, type: string }
+      expected_head_tree: { description: "Exact PR head tree", required: true, type: string }
+permissions: {}
+jobs:
+  authorize:
+    environment: owner-ready-approval
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v5
+      - name: Mint installation token
+        id: token
+        env:
+          APP_ID: ${{ secrets.GATE_APP_ID }}
+          INSTALLATION_ID: ${{ secrets.GATE_INSTALLATION_ID }}
+          APP_PRIVATE_KEY: ${{ secrets.GATE_APP_PRIVATE_KEY }}
+        run: |
+          token=$(node scripts/app-token.mjs)
+          echo "token=$token" >> "$GITHUB_OUTPUT"
+          echo "::add-mask::$token"
+      - name: Issue exact READY authority
+        env:
+          APP_TOKEN: ${{ steps.token.outputs.token }}
+          AUTHORITY_KIND: READY
+          PR_NUMBER: ${{ inputs.pr_number }}
+          EXPECTED_BASE_SHA: ${{ inputs.expected_base_sha }}
+          EXPECTED_HEAD_SHA: ${{ inputs.expected_head_sha }}
+          EXPECTED_HEAD_TREE: ${{ inputs.expected_head_tree }}
+        run: node scripts/authority.mjs
