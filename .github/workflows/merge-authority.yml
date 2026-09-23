@@ -12,7 +12,12 @@ jobs:
     environment: owner-merge-approval
     runs-on: ubuntu-latest
     steps:
-      - uses: actions/checkout@v5
+      - name: Checkout exact gate source
+        run: |
+          git init .
+          git remote add origin https://github.com/suirindo/netsujo-owner-merge-authority-gate.git
+          git fetch --depth=1 origin "$GITHUB_SHA"
+          git checkout --detach FETCH_HEAD
       - name: Mint installation token
         id: token
         env:
